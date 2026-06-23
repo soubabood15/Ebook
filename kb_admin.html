@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KB Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#2563eb;--green:#059669;--red:#dc2626;--amber:#b45309;--bg:#eef5ff;--text:#1d2b5c}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#eef5ff,#f8fbff);color:var(--text)}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
+.box,.panel{background:rgba(255,255,255,.95);border:1px solid rgba(37,99,235,.15);border-radius:24px;box-shadow:0 20px 60px rgba(37,99,235,.14)}
+.box{width:min(430px,100%);padding:28px;text-align:center}
+h1,h2,h3{margin:0 0 14px;color:var(--blue)}
+input,select,textarea{width:100%;border:1px solid #dbeafe;border-radius:14px;padding:12px;margin:7px 0;font-weight:800;font-family:inherit;background:white}
+textarea{min-height:110px}
+button{border:0;border-radius:14px;padding:11px 14px;font-weight:950;cursor:pointer;margin:3px}
+.primary{background:var(--blue);color:#fff}.green{background:#dcfce7;color:var(--green)}.red{background:#fee2e2;color:var(--red)}.amber{background:#fef3c7;color:var(--amber)}.ghost{background:#eef2ff;color:#1d4ed8}
+.app{display:none;min-height:100vh}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:18px 22px;background:#fff;border-bottom:1px solid #dbeafe}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;padding:16px 22px}
+.tab{background:#fff;color:#1d4ed8;border:1px solid #dbeafe}.tab.active{background:var(--blue);color:#fff}
+.panel{margin:0 22px 22px;padding:20px;display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden}
+th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:right;vertical-align:top}
+th{background:#dbeafe;color:#1f4eff}
+.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#eef2ff;font-weight:900}
+.pending{color:var(--amber)}.approved{color:var(--green)}.rejected{color:var(--red)}
+.msg{display:none;margin:10px 0;padding:10px;border-radius:12px;font-weight:900}.msg.show{display:block}.msg.ok{background:#dcfce7;color:var(--green)}.msg.err{background:#fee2e2;color:var(--red)}
+pre{direction:ltr;text-align:left;white-space:pre-wrap;max-width:460px;background:#f8fafc;padding:10px;border-radius:12px}
+.request-card{min-width:360px;max-width:620px;text-align:right;direction:rtl;background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:12px}
+.request-title{font-size:15px;font-weight:950;color:#15317a;margin-bottom:8px}
+.request-meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.request-chip{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:999px;background:#eef2ff;color:#1d4ed8;font-size:11px;font-weight:950;border:1px solid #dbeafe}
+.request-chip.red{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.request-chip.green{background:#dcfce7;color:#047857;border-color:#bbf7d0}
+.request-chip.amber{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.request-block{margin-top:10px;padding:10px;border-radius:13px;background:#fff;border:1px solid #e5e7eb;color:#334155;font-size:12px;font-weight:800;line-height:1.65;white-space:pre-wrap}
+.request-label{font-size:11px;font-weight:950;color:#64748b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.request-raw-toggle{margin-top:8px;width:100%;background:#eef2ff;color:#1d4ed8}
+.request-raw{display:none;margin-top:8px;direction:ltr;text-align:left;white-space:pre-wrap;max-width:100%;background:#0f172a;color:#dbeafe;padding:10px;border-radius:12px;font-size:11px;overflow:auto}
+.request-raw.show{display:block}
+.request-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.user-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.user-filter{max-width:220px;margin:0}
+.user-summary{font-size:12px;color:#64748b;font-weight:900}
+.request-filter{max-width:220px;margin:0}
+.request-summary{font-size:12px;color:#64748b;font-weight:900}
+.request-title-cell{font-weight:950;color:#15317a;max-width:260px}
+.request-note-cell{font-size:12px;color:#991b1b;font-weight:900;max-width:240px;white-space:pre-wrap}
+.details-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;align-items:center;justify-content:center;padding:18px}
+.details-overlay.show{display:flex}
+.details-modal{width:min(760px,96vw);max-height:88vh;overflow:auto;background:white;border-radius:24px;padding:18px;box-shadow:0 30px 90px rgba(15,23,42,.28);direction:rtl;text-align:right}
+.details-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.details-head h2{margin:0;color:#15317a}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;align-items:center;justify-content:center;padding:18px}
+.confirm-overlay.show{display:flex}
+.confirm-modal{width:min(430px,94vw);background:#fff;border-radius:24px;padding:20px;box-shadow:0 30px 90px rgba(15,23,42,.30);text-align:center;direction:rtl}
+.confirm-modal h2{margin:0 0 8px;color:#dc2626}
+.confirm-modal p{margin:0 0 16px;color:#334155;font-weight:850;line-height:1.7}
+.confirm-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.confirm-actions button{min-width:120px}
+.system-box{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.system-card{background:#f8fafc;border:1px solid #dbeafe;border-radius:18px;padding:14px}
+.system-card h3{margin-bottom:8px}
+.knowledge-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 16px}
+.knowledge-toolbar input{max-width:360px;margin:0}
+.knowledge-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.knowledge-stat{background:#f8fafc;border:1px solid #dbeafe;border-radius:18px;padding:14px}
+.knowledge-stat strong{display:block;font-size:22px;color:#15317a;margin-bottom:4px}
+.knowledge-stat span{font-size:12px;font-weight:900;color:#64748b}
+.knowledge-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.knowledge-section-card{background:#f8fafc;border:1px solid #dbeafe;border-radius:20px;padding:14px}
+.knowledge-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.knowledge-section-head h3{margin:0;color:#15317a}
+.knowledge-section-count{font-size:11px;font-weight:950;color:#1d4ed8;background:#eef2ff;border:1px solid #dbeafe;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.knowledge-group-card{background:white;border:1px solid #e5e7eb;border-radius:16px;padding:10px;margin-top:10px}
+.knowledge-group-title{font-size:13px;font-weight:950;color:#0f172a;margin-bottom:8px}
+.knowledge-case-list{display:grid;gap:7px}
+.knowledge-case-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:#f9fafb;border:1px solid #eef2f7;border-radius:13px;padding:8px}
+.knowledge-case-title{font-size:12px;font-weight:900;color:#334155;line-height:1.5}
+.knowledge-empty{padding:18px;border-radius:18px;background:#f8fafc;border:1px dashed #bfdbfe;color:#64748b;font-weight:900;text-align:center}
+@media(max-width:980px){.knowledge-board{grid-template-columns:1fr}.knowledge-stats{grid-template-columns:1fr}}
+@media(max-width:760px){.system-box{grid-template-columns:1fr}.request-card{min-width:0}.details-modal{width:96vw}}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+<div class="login" id="loginScreen">
+  <div class="box">
+    <h1>KB Admin</h1>
+    <p>تسجيل دخول الأدمن</p>
+    <input id="loginUser" placeholder="Username" autocomplete="off">
+    <input id="loginPass" placeholder="Password" type="password">
+    <div class="msg err" id="loginMsg"></div>
+    <button class="primary" id="loginBtn">Login</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="top">
+    <div><h2>New Knowledge Admin</h2><div id="welcome"></div><div style="font-size:12px;color:#64748b;font-weight:800;">Connected to new Supabase: sections / groups / cases</div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="amber" id="forceRefreshBtn" type="button">Force Refresh All</button>
+      <button class="red" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="requests">📝 Requests</button>
+    <button class="tab" data-tab="knowledge">📚 Knowledge</button>
+    <button class="tab" data-tab="trainers">👥 Users & Passwords</button>
+    <button class="tab" data-tab="systemControl">⚙️ System Control</button>
+  </div>
+
+  <section class="panel active" id="requests">
+    <h2>Knowledge Requests</h2>
+    <div class="request-tools">
+      <button class="primary" type="button" onclick="loadRequests()">Refresh Requests</button>
+      <select id="requestStatusFilter" class="request-filter" onchange="renderRequestsTable()">
+        <option value="all">All Requests</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <span class="request-summary" id="requestSummary">0 requests</span>
+    </div>
+    <div class="msg" id="requestMsg"></div>
+    <table>
+      <thead><tr><th>Trainer</th><th>Type</th><th>Status</th><th>Title</th><th>Reason</th><th>Actions</th></tr></thead>
+      <tbody id="requestsTable"></tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="trainers">
+    <h2>Manage Users & Passwords</h2>
+    <div class="msg" id="trainerMsg"></div>
+    <div class="grid">
+      <input id="trFullName" placeholder="Full Name">
+      <input id="trUsername" placeholder="Username">
+      <input id="trPassword" placeholder="Password">
+<select id="trRole">
+  <option value="agent">agent</option>
+  <option value="trainer">trainer</option>
+  <option value="admin">admin</option>
+</select>    </div>
+    <button class="primary" id="addTrainerBtn">Add User</button>
+    <div class="user-tools">
+      <select id="userRoleFilter" class="user-filter" onchange="renderUsersTable()">
+        <option value="all">All Users</option>
+        <option value="agent">Agents</option>
+        <option value="trainer">Trainers</option>
+        <option value="admin">Admins</option>
+      </select>
+      <span class="user-summary" id="userSummary">0 users</span>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="trainersTable"></tbody>
+    </table>
+  </section>
+
+<section class="panel" id="systemControl">
+  <h2>System Control</h2>
+  <div class="msg" id="systemMsg"></div>
+  <div class="system-box">
+    <div class="system-card">
+      <h3>Refresh</h3>
+      <p>إجبار كل الصفحات المفتوحة تعمل تحديث.</p>
+      <button class="amber" type="button" onclick="forceRefreshAll(true)">Force Refresh All</button>
+    </div>
+    <div class="system-card">
+      <h3>System Status</h3>
+      <p>إغلاق أو فتح النظام للصفحات المتصلة.</p>
+      <button class="red" type="button" onclick="setSystemStatus('closed')">Close System</button>
+      <button class="green" type="button" onclick="setSystemStatus('open')">Open System</button>
+    </div>
+    <div class="system-card">
+      <h3>Single User Logout</h3>
+      <input id="singleLogoutUser" placeholder="Username">
+      <button class="ghost" type="button" onclick="logoutUserFromInput()">Logout User</button>
+    </div>
+  </div>
+</section>
+
+  <section class="panel" id="knowledge">
+    <h2>Knowledge View</h2>
+    <div class="knowledge-toolbar">
+      <button class="primary" type="button" onclick="loadKnowledge()">Refresh Knowledge</button>
+      <input id="knowledgeSearch" placeholder="Search section, group, case..." oninput="renderKnowledgeBoard()">
+      <span class="request-summary" id="knowledgeSummary">0 items</span>
+    </div>
+    <div class="knowledge-stats">
+      <div class="knowledge-stat"><strong id="sectionCount">0</strong><span>Sections</span></div>
+      <div class="knowledge-stat"><strong id="groupCount">0</strong><span>Groups</span></div>
+      <div class="knowledge-stat"><strong id="caseCount">0</strong><span>Cases</span></div>
+    </div>
+    <div class="knowledge-board" id="knowledgeBoard"></div>
+  </section>
+</div>
+
+<div class="details-overlay" id="requestDetailsOverlay">
+  <div class="details-modal">
+    <div class="details-head">
+      <h2>Request Details</h2>
+      <button class="red" type="button" onclick="closeRequestDetails()">Close</button>
+    </div>
+    <div id="requestDetailsBody"></div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="deleteConfirmOverlay">
+  <div class="confirm-modal">
+    <h2>تأكيد الحذف</h2>
+    <p id="deleteConfirmText">هل تريد حذف هذا الطلب؟</p>
+    <div class="confirm-actions">
+      <button class="red" type="button" onclick="confirmDeleteRequest()">حذف</button>
+      <button class="ghost" type="button" onclick="closeDeleteConfirm()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://estyiinuotsygtrgtezz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_NB_aYGgJ7o8RB1ddYWSIOA_Gwj39mfs';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentAdmin = null;
+let requestCache = [];
+let requestGroupNameById = new Map();
+let pendingDeleteRequestId = null;
+let knowledgeCache = {sections:[], groups:[], cases:[]};
+let usersCache = [];
+const PROTECTED_USERNAMES = ['aboodsoub'];
+const $ = id => document.getElementById(id);
+function showMsg(el,text,ok=true){el.textContent=text;el.className='msg show '+(ok?'ok':'err');setTimeout(()=>el.classList.remove('show'),3500)}
+function esc(v){return String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+function splitDescriptionParts(description){
+  const text = String(description || '').trim();
+  if(!text) return {steps:'-', reply:'-'};
+
+  const markers = [
+    'Note / Suggested Reply:',
+    'Suggested Reply:',
+    'Extra note / Suggested reply:',
+    'Extra Note / Suggested Reply:',
+    'Note:'
+  ];
+
+  for(const marker of markers){
+    const index = text.toLowerCase().indexOf(marker.toLowerCase());
+    if(index !== -1){
+      return {
+        steps:text.slice(0,index).trim() || '-',
+        reply:text.slice(index + marker.length).trim() || '-'
+      };
+    }
+  }
+
+  return {steps:text, reply:'-'};
+}
+
+function renderRequestData(request, groupNameById = new Map()){
+  const data = request.proposed_data || {};
+  const title = data.title || data.name || data.group_name || request.request_type || 'Request';
+  const descriptionParts = splitDescriptionParts(data.description);
+  const severity = data.severity || '-';
+  const escalation = data.escalation === true || data.escalation === 'Yes';
+  const refund = data.refund === true || data.refund === 'Yes';
+  const image = data.img || data.image_url || '';
+  const rawId = `raw_${String(request.id || '').replace(/[^a-zA-Z0-9_-]/g,'')}`;
+  const groupName = data.group_id ? (groupNameById.get(data.group_id) || 'Unknown group') : '';
+
+  return `
+    <div class="request-card">
+      <div class="request-title">${esc(title)}</div>
+      <div class="request-meta">
+        <span class="request-chip amber">${esc(request.request_type || '-')}</span>
+        <span class="request-chip">Severity: ${esc(severity)}</span>
+        ${escalation ? '<span class="request-chip red">🚨 Escalation</span>' : '<span class="request-chip green">No Escalation</span>'}
+        ${refund ? '<span class="request-chip green">💳 Refund</span>' : '<span class="request-chip">No Refund</span>'}
+      </div>
+      ${groupName ? `<div class="request-block"><div class="request-label">Group</div>${esc(groupName)}</div>` : ''}
+      <div class="request-block"><div class="request-label">Steps</div>${esc(descriptionParts.steps)}</div>
+      <div class="request-block"><div class="request-label">Suggested Reply</div>${esc(descriptionParts.reply)}</div>
+      ${image ? `<div class="request-block"><div class="request-label">Image</div>${esc(image)}</div>` : ''}
+      ${request.status === 'rejected' ? `<div class="request-block"><div class="request-label">Rejected Reason</div>${esc(request.admin_note || 'No rejection reason provided.')}</div>` : ''}
+      ${request.reviewed_by ? `<div class="request-block"><div class="request-label">Reviewed</div>${esc(request.reviewed_by)}${request.reviewed_at ? ' — ' + esc(new Date(request.reviewed_at).toLocaleString()) : ''}</div>` : ''}
+      <button class="request-raw-toggle" type="button" onclick="toggleRawRequest('${rawId}')">Show Raw JSON</button>
+      <pre class="request-raw" id="${rawId}">${esc(JSON.stringify(data, null, 2))}</pre>
+    </div>
+  `;
+}
+
+function toggleRawRequest(id){
+  const el = $(id);
+  if(el) el.classList.toggle('show');
+}
+
+function getRequestTitle(request){
+  const data = request.proposed_data || {};
+  return data.title || data.name || data.group_name || request.request_type || 'Request';
+}
+
+function openRequestDetails(id){
+  const request = requestCache.find(item => item.id === id);
+  if(!request) return showMsg($('requestMsg'),'Request not found',false);
+  $('requestDetailsBody').innerHTML = renderRequestData(request, requestGroupNameById);
+  $('requestDetailsOverlay').classList.add('show');
+}
+
+function closeRequestDetails(){
+  $('requestDetailsOverlay').classList.remove('show');
+  $('requestDetailsBody').innerHTML = '';
+}
+
+function renderRequestsTable(){
+  const filter = $('requestStatusFilter') ? $('requestStatusFilter').value : 'all';
+  const rows = filter === 'all' ? requestCache : requestCache.filter(item => (item.status || 'pending') === filter);
+
+  if($('requestSummary')){
+    const pending = requestCache.filter(item => item.status === 'pending').length;
+    const approved = requestCache.filter(item => item.status === 'approved').length;
+    const rejected = requestCache.filter(item => item.status === 'rejected').length;
+    $('requestSummary').textContent = `${rows.length} shown | Pending ${pending} | Approved ${approved} | Rejected ${rejected}`;
+  }
+
+  $('requestsTable').innerHTML=rows.map(r=>`
+    <tr>
+      <td>${esc(r.submitted_name || r.submitted_by || '-')}</td>
+      <td>${esc(r.request_type || '-')}</td>
+      <td><span class="badge ${esc(r.status || 'pending')}">${esc(r.status || 'pending')}</span></td>
+      <td class="request-title-cell">${esc(getRequestTitle(r))}</td>
+      <td class="request-note-cell">${r.status === 'rejected' ? esc(r.admin_note || 'No reason') : '-'}</td>
+      <td>
+        <button class="ghost" onclick="openRequestDetails('${r.id}')">View Details</button>
+        ${r.status==='pending'
+          ? `<button class="green" onclick="approveRequest('${r.id}')">Approve</button><button class="red" onclick="rejectRequest('${r.id}')">Reject</button>`
+          : `<button class="red" onclick="deleteRequest('${r.id}')">Delete</button>`}
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6">No requests found.</td></tr>';
+}
+
+async function login(){
+  const username=$('loginUser').value.trim();
+  const password=$('loginPass').value.trim();
+
+  const {data,error}=await db
+    .from('trainer_users')
+    .select('*')
+    .eq('username',username)
+    .eq('password',password)
+    .eq('active',true)
+    .maybeSingle();
+
+  if(error){
+    $('loginMsg').textContent='Supabase error: ' + error.message;
+    $('loginMsg').className='msg err show';
+    return;
+  }
+
+  if(!data){
+    $('loginMsg').textContent='No admin user found. Check trainer_users table.';
+    $('loginMsg').className='msg err show';
+    return;
+  }
+
+  if(data.role !== 'admin'){
+    $('loginMsg').textContent='This user exists but role is not admin.';
+    $('loginMsg').className='msg err show';
+    return;
+  }
+
+  currentAdmin=data;
+  sessionStorage.setItem('kb_admin_user_new',JSON.stringify(data));
+  openApp();
+}
+function openApp(){$('loginScreen').style.display='none';$('app').style.display='block';$('welcome').textContent=`Welcome, ${currentAdmin.full_name || currentAdmin.username}`;loadAll()}
+function logout(){sessionStorage.removeItem('kb_admin_user_new');sessionStorage.removeItem('kb_admin_user');location.reload()}
+
+async function forceRefreshAll(showMessage=true){
+  const refreshValue = String(Date.now());
+
+  const {error}=await db.from('app_control').upsert({
+    key:'force_refresh_all',
+    value:refreshValue,
+    updated_at:new Date().toISOString()
+  },{onConflict:'key'});
+
+  if(error){
+    if(showMessage) alert('Force refresh error: ' + error.message);
+    return false;
+  }
+
+  if(showMessage) alert('تم إرسال Refresh لكل الصفحات المفتوحة');
+  return true;
+}
+
+async function loadTrainers(){
+  const {data,error}=await db.from('trainer_users').select('*').order('created_at',{ascending:false});
+  if(error) return showMsg($('trainerMsg'),error.message,false);
+
+  usersCache = (data||[]).filter(u => !PROTECTED_USERNAMES.includes(u.username));
+  renderUsersTable();
+}
+
+function renderUsersTable(){
+  const filter = $('userRoleFilter') ? $('userRoleFilter').value : 'all';
+  const visibleUsers = filter === 'all' ? usersCache : usersCache.filter(u => (u.role || 'trainer') === filter);
+
+  if($('userSummary')){
+    const agents = usersCache.filter(u => u.role === 'agent').length;
+    const trainers = usersCache.filter(u => u.role === 'trainer').length;
+    const admins = usersCache.filter(u => u.role === 'admin').length;
+    $('userSummary').textContent = `${visibleUsers.length} shown | Agents ${agents} | Trainers ${trainers} | Admins ${admins}`;
+  }
+
+  $('trainersTable').innerHTML=visibleUsers.map(u=>`
+    <tr>
+      <td>${esc(u.full_name || '-')}</td>
+      <td>${esc(u.username || '-')}</td>
+      <td><span class="badge">${esc(u.role || 'trainer')}</span></td>
+      <td>${u.active?'Active':'Disabled'}</td>
+      <td>
+        <button class="amber" onclick="changePass('${u.id}')">Password</button>
+        <button class="ghost" onclick="logoutSingleUser('${esc(u.username || '')}')">Logout</button>
+        <button class="ghost" onclick="toggleTrainer('${u.id}',${!u.active})">${u.active?'Disable':'Enable'}</button>
+        <button class="red" onclick="deleteUser('${u.id}','${esc(u.username || '')}')">Delete</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="5">No users found</td></tr>';
+}
+async function addTrainer(){
+  const payload={
+    full_name:$('trFullName').value.trim(),
+    username:$('trUsername').value.trim(),
+    password:$('trPassword').value.trim(),
+    role:$('trRole').value,
+    active:true,
+    updated_at:new Date().toISOString()
+  };
+
+  if(!payload.username||!payload.password){
+    return showMsg($('trainerMsg'),'Username and password required',false);
+  }
+
+  if(PROTECTED_USERNAMES.includes(payload.username)){
+    return showMsg($('trainerMsg'),'This protected user cannot be edited here',false);
+  }
+
+  const {data:existingUser,error:checkError}=await db
+    .from('trainer_users')
+    .select('id,username')
+    .eq('username',payload.username)
+    .maybeSingle();
+
+  if(checkError)return showMsg($('trainerMsg'),checkError.message,false);
+
+  if(existingUser){
+    const {error:updateError}=await db
+      .from('trainer_users')
+      .update(payload)
+      .eq('id',existingUser.id);
+
+    if(updateError)return showMsg($('trainerMsg'),updateError.message,false);
+
+    $('trFullName').value='';
+    $('trUsername').value='';
+    $('trPassword').value='';
+    $('trRole').value='agent';
+
+    showMsg($('trainerMsg'),'User already existed, updated successfully');
+    loadTrainers();
+    return;
+  }
+
+  const {error}=await db.from('trainer_users').insert(payload);
+  if(error)return showMsg($('trainerMsg'),error.message,false);
+
+  $('trFullName').value='';
+  $('trUsername').value='';
+  $('trPassword').value='';
+  $('trRole').value='agent';
+
+  showMsg($('trainerMsg'),'User added');
+  loadTrainers();
+}
+async function changePass(id){
+  const {data:user,error:userError}=await db.from('trainer_users').select('username').eq('id',id).maybeSingle();
+  if(userError)return showMsg($('trainerMsg'),userError.message,false);
+  if(user && PROTECTED_USERNAMES.includes(user.username))return showMsg($('trainerMsg'),'Protected user cannot be changed',false);
+
+  const pass=prompt('New password');
+  if(!pass)return;
+  const {error}=await db.from('trainer_users').update({password:pass,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error)return showMsg($('trainerMsg'),error.message,false);
+  showMsg($('trainerMsg'),'Password changed');
+}
+async function toggleTrainer(id,active){
+  const {data:user,error:userError}=await db.from('trainer_users').select('username').eq('id',id).maybeSingle();
+  if(userError)return showMsg($('trainerMsg'),userError.message,false);
+  if(user && PROTECTED_USERNAMES.includes(user.username))return showMsg($('trainerMsg'),'Protected user cannot be disabled',false);
+
+  const {error}=await db.from('trainer_users').update({active,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error)return showMsg($('trainerMsg'),error.message,false);
+  await forceRefreshAll(false);
+  loadTrainers();
+}
+
+async function deleteUser(id,username){
+  if(PROTECTED_USERNAMES.includes(username)){
+    return showMsg($('trainerMsg'),'Protected user cannot be deleted',false);
+  }
+
+  if(username === currentAdmin.username){
+    return showMsg($('trainerMsg'),'You cannot delete the logged-in admin',false);
+  }
+
+  if(!confirm('Delete user: ' + username + '?')) return;
+
+  const {error}=await db.from('trainer_users').delete().eq('id',id);
+  if(error)return showMsg($('trainerMsg'),error.message,false);
+
+  showMsg($('trainerMsg'),'User deleted');
+  await forceRefreshAll(false);
+  loadTrainers();
+}
+
+async function loadRequests(){
+  const {data,error}=await db
+    .from('knowledge_change_requests')
+    .select('*')
+    .order('created_at',{ascending:false});
+
+  if(error){
+    $('requestsTable').innerHTML=`<tr><td colspan="6">Supabase error: ${esc(error.message)}</td></tr>`;
+    return showMsg($('requestMsg'),'Supabase error: ' + error.message,false);
+  }
+
+  const {data:groupsData,error:groupsLoadError}=await db
+    .from('groups')
+    .select('id,name');
+
+  requestCache = data || [];
+  requestGroupNameById = new Map((groupsData || []).map(group => [group.id, group.name]));
+
+  if(groupsLoadError){
+    console.warn('Unable to load groups for request display:', groupsLoadError.message);
+  }
+
+  renderRequestsTable();
+}
+
+async function approveRequest(id){
+  const {data:req,error:requestError}=await db
+    .from('knowledge_change_requests')
+    .select('*')
+    .eq('id',id)
+    .maybeSingle();
+
+  if(requestError || !req)return showMsg($('requestMsg'),'Request not found',false);
+
+  const payload=req.proposed_data || {};
+  let actionError=null;
+
+  if(req.request_type==='add_case'){
+    const result=await db.from('cases').insert([payload]);
+    actionError=result.error;
+  }
+
+  if(req.request_type==='edit_case'){
+    const result=await db.from('cases').update(payload).eq('id',req.target_id);
+    actionError=result.error;
+  }
+
+  if(req.request_type==='delete_case'){
+    const result=await db.from('cases').delete().eq('id',req.target_id);
+    actionError=result.error;
+  }
+
+  if(req.request_type==='add_group'){
+    const result=await db.from('groups').insert([payload]);
+    actionError=result.error;
+  }
+
+  if(req.request_type==='edit_group'){
+    const result=await db.from('groups').update(payload).eq('id',req.target_id);
+    actionError=result.error;
+  }
+
+  if(req.request_type==='delete_group'){
+    const result=await db.from('groups').delete().eq('id',req.target_id);
+    actionError=result.error;
+  }
+
+  if(actionError)return showMsg($('requestMsg'),actionError.message,false);
+
+  const {error:updateError}=await db.from('knowledge_change_requests').update({
+    status:'approved',
+    reviewed_by:currentAdmin.username,
+    reviewed_at:new Date().toISOString()
+  }).eq('id',id);
+
+  if(updateError)return showMsg($('requestMsg'),updateError.message,false);
+
+  showMsg($('requestMsg'),'Approved');
+  loadAll();
+}
+
+async function rejectRequest(id){
+  const note=prompt('Reason?') || '';
+  const {error}=await db.from('knowledge_change_requests').update({
+    status:'rejected',
+    admin_note:note,
+    reviewed_by:currentAdmin.username,
+    reviewed_at:new Date().toISOString()
+  }).eq('id',id);
+
+  if(error)return showMsg($('requestMsg'),error.message,false);
+  showMsg($('requestMsg'),'Rejected');
+  loadRequests();
+}
+
+function deleteRequest(id){
+  const request = requestCache.find(item => item.id === id);
+  if(!request) return showMsg($('requestMsg'),'Request not found',false);
+  if((request.status || 'pending') === 'pending') return showMsg($('requestMsg'),'Pending requests cannot be deleted before review',false);
+
+  pendingDeleteRequestId = id;
+  $('deleteConfirmText').textContent = 'هل تريد حذف هذا الطلب؟';
+  $('deleteConfirmOverlay').classList.add('show');
+}
+
+function closeDeleteConfirm(){
+  pendingDeleteRequestId = null;
+  $('deleteConfirmOverlay').classList.remove('show');
+}
+
+async function confirmDeleteRequest(){
+  if(!pendingDeleteRequestId) return;
+  const id = pendingDeleteRequestId;
+
+  const {error}=await db.from('knowledge_change_requests').delete().eq('id',id);
+  if(error){
+    closeDeleteConfirm();
+    return showMsg($('requestMsg'),error.message,false);
+  }
+
+  closeDeleteConfirm();
+  showMsg($('requestMsg'),'Request deleted');
+  loadRequests();
+}
+
+async function logoutSingleUser(username){
+  username = String(username || '').trim();
+  if(!username) return showMsg($('trainerMsg') || $('systemMsg'),'Username required',false);
+  if(PROTECTED_USERNAMES.includes(username)) return showMsg($('trainerMsg') || $('systemMsg'),'Protected user cannot be logged out from here',false);
+
+  const {error}=await db.from('app_control').upsert({
+    key:'logout_user_' + username,
+    value:String(Date.now()),
+    updated_at:new Date().toISOString()
+  },{onConflict:'key'});
+
+  if(error)return showMsg($('trainerMsg') || $('systemMsg'),error.message,false);
+  showMsg($('trainerMsg') || $('systemMsg'),'Logout sent to ' + username);
+}
+
+function logoutUserFromInput(){
+  logoutSingleUser($('singleLogoutUser').value);
+}
+
+async function setSystemStatus(status){
+  const {error}=await db.from('app_control').upsert({
+    key:'system_status',
+    value:status,
+    updated_at:new Date().toISOString()
+  },{onConflict:'key'});
+
+  if(error)return showMsg($('systemMsg'),error.message,false);
+  showMsg($('systemMsg'),'System status changed to ' + status);
+  await forceRefreshAll(false);
+}
+
+
+async function loadKnowledge(){
+  const {data:sections,error:sectionsError}=await db.from('sections').select('id,name,icon,created_at').order('created_at',{ascending:true});
+  const {data:groups,error:groupsError}=await db.from('groups').select('id,section_id,name,created_at').order('created_at',{ascending:true});
+  const {data:cases,error:casesError}=await db.from('cases').select('id,group_id,title,severity,created_at').order('created_at',{ascending:false});
+
+  if(sectionsError || groupsError || casesError){
+    const message = sectionsError?.message || groupsError?.message || casesError?.message || 'Unable to load knowledge';
+    $('knowledgeBoard').innerHTML=`<div class="knowledge-empty">${esc(message)}</div>`;
+    return;
+  }
+
+  knowledgeCache = {
+    sections: sections || [],
+    groups: groups || [],
+    cases: cases || []
+  };
+
+  $('sectionCount').textContent = knowledgeCache.sections.length;
+  $('groupCount').textContent = knowledgeCache.groups.length;
+  $('caseCount').textContent = knowledgeCache.cases.length;
+
+  renderKnowledgeBoard();
+}
+
+function renderKnowledgeBoard(){
+  const query = ($('knowledgeSearch')?.value || '').trim().toLowerCase();
+  const {sections, groups, cases} = knowledgeCache;
+  const groupsBySection = new Map();
+  const casesByGroup = new Map();
+
+  groups.forEach(group => {
+    if(!groupsBySection.has(group.section_id)) groupsBySection.set(group.section_id, []);
+    groupsBySection.get(group.section_id).push(group);
+  });
+
+  cases.forEach(item => {
+    if(!casesByGroup.has(item.group_id)) casesByGroup.set(item.group_id, []);
+    casesByGroup.get(item.group_id).push(item);
+  });
+
+  let shownSections = 0;
+  let shownGroups = 0;
+  let shownCases = 0;
+
+  const html = sections.map(section => {
+    const sectionGroups = groupsBySection.get(section.id) || [];
+    const groupHtml = sectionGroups.map(group => {
+      const groupCases = casesByGroup.get(group.id) || [];
+      const filteredCases = groupCases.filter(item => {
+        const haystack = `${section.name || ''} ${group.name || ''} ${item.title || ''} ${item.severity || ''}`.toLowerCase();
+        return !query || haystack.includes(query);
+      });
+
+      const groupMatches = !query || `${section.name || ''} ${group.name || ''}`.toLowerCase().includes(query);
+      const visibleCases = groupMatches && query ? groupCases : filteredCases;
+      if(query && !groupMatches && visibleCases.length === 0) return '';
+
+      shownGroups += 1;
+      shownCases += visibleCases.length;
+
+      return `
+        <div class="knowledge-group-card">
+          <div class="knowledge-group-title">${esc(group.name || '-')}</div>
+          <div class="knowledge-case-list">
+            ${visibleCases.map(item => `
+              <div class="knowledge-case-item">
+                <div class="knowledge-case-title">${esc(item.title || '-')}</div>
+                <span class="badge ${esc(String(item.severity || 'Low').toLowerCase())}">${esc(item.severity || 'Low')}</span>
+              </div>
+            `).join('') || '<div class="knowledge-empty">No cases in this group</div>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if(query && !groupHtml.trim()) return '';
+    shownSections += 1;
+
+    const sectionCaseCount = sectionGroups.reduce((total, group) => total + (casesByGroup.get(group.id) || []).length, 0);
+
+    return `
+      <div class="knowledge-section-card">
+        <div class="knowledge-section-head">
+          <h3>${esc(section.icon || '')} ${esc(section.name || '-')}</h3>
+          <span class="knowledge-section-count">${sectionGroups.length} groups / ${sectionCaseCount} cases</span>
+        </div>
+        ${groupHtml || '<div class="knowledge-empty">No groups found</div>'}
+      </div>
+    `;
+  }).join('');
+
+  $('knowledgeBoard').innerHTML = html || '<div class="knowledge-empty">No matching knowledge found</div>';
+  if($('knowledgeSummary')){
+    $('knowledgeSummary').textContent = `${shownSections} sections | ${shownGroups} groups | ${shownCases} cases shown`;
+  }
+}
+async function loadAll(){await loadRequests();await loadKnowledge();await loadTrainers()}
+
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');$(btn.dataset.tab).classList.add('active')})
+$('loginBtn').onclick=login;$('logoutBtn').onclick=logout;$('addTrainerBtn').onclick=addTrainer;$('forceRefreshBtn').onclick=()=>forceRefreshAll(true);
+$('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+document.addEventListener('keydown',e=>{
+  if(!$('deleteConfirmOverlay')?.classList.contains('show')) return;
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    confirmDeleteRequest();
+  }
+  if(e.key === 'Escape'){
+    e.preventDefault();
+    closeDeleteConfirm();
+  }
+});
+sessionStorage.removeItem('kb_admin_user');
+const saved=sessionStorage.getItem('kb_admin_user_new');
+if(saved){currentAdmin=JSON.parse(saved);openApp()}
+</script>
+</body>
+</html>
