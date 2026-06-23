@@ -1790,6 +1790,11 @@ body.night-mode .agent-live-panel {
   // Supabase client (FIXED)
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window.supabaseClient = supabaseClient;
+  function secureRandomInt(max = 1000000) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] % max;
+  }
   // ===== FIX: Reliable Insert Function (Trainer KB) =====
   async function addCaseToSupabase(caseData) {
     try {
@@ -2088,7 +2093,7 @@ function resetSupabaseUi() {
         btn.dataset.escalation = boolToYesNo(item.escalation);
         btn.dataset.refund = boolToYesNo(item.refund);
         btn.dataset.img = item.img || '';
-        btn.dataset.caseId = item.id || `supa-${Date.now()}-${Math.random()}`;
+        btn.dataset.caseId = item.id || `supa-${Date.now()}-${secureRandomInt()}`;
 
         btn.addEventListener('click', () => openCaseFromButton(btn));
 
@@ -2251,7 +2256,7 @@ function resetSupabaseUi() {
     let sessionId = sessionStorage.getItem(ATTENDANCE_SESSION_KEY);
 
     if (!sessionId) {
-      sessionId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+      sessionId = `${Date.now()}-${secureRandomInt()}`;
       sessionStorage.setItem(ATTENDANCE_SESSION_KEY, sessionId);
       sessionStorage.setItem(ATTENDANCE_LOGIN_TIME_KEY, String(Date.now()));
     }
@@ -2338,7 +2343,7 @@ function resetSupabaseUi() {
       agentTodayTotalTimer.textContent = formatOnlineTimer(getOnlineSeconds());
     }
 
-    const callbackName = `attendanceCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const callbackName = `attendanceCallback_${Date.now()}_${secureRandomInt(100000)}`;
     const script = document.createElement('script');
     const sessionId = getAttendanceSessionId();
     const onlineSeconds = getOnlineSeconds();
@@ -2368,7 +2373,7 @@ function resetSupabaseUi() {
     localStorage.setItem(ATTENDANCE_LAST_TICK_KEY, String(Date.now()));
 
     if (isLoginEvent || !sessionStorage.getItem(ATTENDANCE_SESSION_KEY) || !sessionStorage.getItem(ATTENDANCE_LOGIN_TIME_KEY)) {
-      sessionStorage.setItem(ATTENDANCE_SESSION_KEY, `${Date.now()}-${Math.floor(Math.random() * 1000000)}`);
+      sessionStorage.setItem(ATTENDANCE_SESSION_KEY, `${Date.now()}-${secureRandomInt()}`);
       sessionStorage.setItem(ATTENDANCE_LOGIN_TIME_KEY, String(Date.now()));
       sendAttendanceHeartbeat('login');
     } else {
@@ -2395,7 +2400,7 @@ function resetSupabaseUi() {
       agentTodayTotalTimer.textContent = formatOnlineTimer(getOnlineSeconds());
     }
 
-    const callbackName = `attendanceOfflineCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const callbackName = `attendanceOfflineCallback_${Date.now()}_${secureRandomInt(100000)}`;
     const script = document.createElement('script');
     const sessionId = getAttendanceSessionId();
     const onlineSeconds = getOnlineSeconds();
