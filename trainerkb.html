@@ -2057,7 +2057,7 @@ function startAddCaseForGroup(groupId){
   const casePanel = title.closest(".form-panel");
   if(casePanel){
     casePanel.classList.remove("trainer-focus-card");
-    void casePanel.offsetWidth;
+    casePanel.getBoundingClientRect();
     casePanel.classList.add("trainer-focus-card");
     casePanel.scrollIntoView({behavior:"smooth", block:"start"});
   }
@@ -2082,7 +2082,7 @@ function duplicateCase(id){
   const casePanel = title.closest(".form-panel");
   if(casePanel){
     casePanel.classList.remove("trainer-focus-card");
-    void casePanel.offsetWidth;
+    casePanel.getBoundingClientRect();
     casePanel.classList.add("trainer-focus-card");
     casePanel.scrollIntoView({behavior:"smooth", block:"start"});
   }
