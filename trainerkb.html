@@ -7,6 +7,7 @@
 
 <script
   src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+  integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
   crossorigin="anonymous">
 </script>
 
@@ -18,7 +19,7 @@
   --card:rgba(255,255,255,0.78);
   --border:rgba(40,94,255,0.14);
   --text:#1d2b5c;
-  --muted:#64748b;
+  --muted:#334155;
   --shadow:0 18px 45px rgba(31,78,255,0.10);
 }
 
@@ -184,7 +185,7 @@ body{
   border-radius:999px;
   background:rgba(40,94,255,0.09);
   border:1px solid rgba(40,94,255,0.14);
-  color:#285eff;
+  color:#1d4ed8;
   font-size:12px;
   font-weight:950;
   white-space:nowrap;
@@ -206,7 +207,7 @@ body{
 .pending-badge{
   background:rgba(245,158,11,0.13);
   border:1px solid rgba(245,158,11,0.28);
-  color:#92400e;
+  color:#78350f;
 }
 
 .rejected-badge{
@@ -325,13 +326,13 @@ body{
 
 .case-badge.medium{
   background:rgba(245,158,11,0.13);
-  color:#92400e;
+  color:#78350f;
   border-color:rgba(245,158,11,0.25);
 }
 
 .case-badge.high{
   background:rgba(239,68,68,0.12);
-  color:#dc2626;
+  color:#991b1b;
   border-color:rgba(239,68,68,0.22);
 }
 
@@ -349,7 +350,7 @@ body{
 
 .case-badge.refund{
   background:rgba(16,185,129,0.11);
-  color:#047857;
+  color:#065f46;
   border-color:rgba(16,185,129,0.22);
 }
 
@@ -478,10 +479,6 @@ button:active{
   display:block;
 }
 
-.group-title{
-  cursor:pointer;
-  user-select:none;
-}
 
 .group-chevron{
   display:inline-flex;
@@ -491,7 +488,7 @@ button:active{
   height:22px;
   border-radius:8px;
   background:rgba(40,94,255,0.10);
-  color:#285eff;
+  color:#1d4ed8;
   font-size:12px;
   font-weight:950;
   transition:0.22s ease;
@@ -502,6 +499,8 @@ button:active{
 }
 
 .group-title{
+  cursor:pointer;
+  user-select:none;
   font-weight:950;
   color:#1d2b5c;
   background:linear-gradient(135deg,rgba(40,94,255,0.10),rgba(40,94,255,0.04));
@@ -541,7 +540,7 @@ button:active{
 
 .group-count{
   font-size:12px;
-  color:#3354a3;
+  color:#1d4ed8;
   white-space:nowrap;
   background:rgba(255,255,255,0.75);
   border:1px solid rgba(40,94,255,0.11);
@@ -618,7 +617,7 @@ button:active{
   margin:0;
   border-radius:12px;
   background:#fee2e2;
-  color:#dc2626;
+  color:#991b1b;
   box-shadow:none;
 }
 
@@ -639,7 +638,7 @@ button:active{
   border-radius:14px;
   background:rgba(40,94,255,0.06);
   border:1px dashed rgba(40,94,255,0.24);
-  color:#51608f;
+  color:#334155;
   font-size:12px;
   font-weight:850;
   margin-top:10px;
@@ -651,7 +650,7 @@ button:active{
   border:1px dashed rgba(40,94,255,0.25);
   border-radius:18px;
   background:rgba(255,255,255,0.58);
-  color:#51608f;
+  color:#334155;
   font-weight:900;
 }
 
@@ -664,7 +663,7 @@ button:active{
   border-radius:999px;
   background:rgba(40,94,255,0.08);
   border:1px solid rgba(40,94,255,0.14);
-  color:#3354a3;
+  color:#1d4ed8;
   font-size:12px;
   font-weight:950;
   box-shadow:0 8px 18px rgba(40,94,255,0.06);
@@ -734,7 +733,7 @@ button:active{
   border-radius:12px;
   background:rgba(245,158,11,0.13);
   border:1px solid rgba(245,158,11,0.28);
-  color:#92400e;
+  color:#78350f;
   font-weight:950;
   font-size:12px;
 }
@@ -796,7 +795,7 @@ button:active{
 .preview-label{
   margin:14px 0 6px;
   font-size:12px;
-  color:#64748b;
+  color:#334155;
   font-weight:950;
   text-transform:uppercase;
   letter-spacing:0.4px;
@@ -821,7 +820,7 @@ button:active{
   border-radius:12px;
   background:rgba(16,185,129,0.10);
   border:1px solid rgba(16,185,129,0.18);
-  color:#047857;
+  color:#065f46;
   font-size:12px;
   font-weight:950;
 }
@@ -863,7 +862,7 @@ button:active{
 </div>
 
 <div class="header" id="trainerHeader" style="display:none;">
-  <span>Trainer KB Designer <span id="trainerWelcome" style="font-size:12px;color:#64748b;font-weight:800;">Build groups, cases, and agent knowledge</span></span>
+  <span>Trainer KB Designer <span id="trainerWelcome" style="font-size:12px;color:#334155;font-weight:800;">Build groups, cases, and agent knowledge</span></span>
   <button class="logout-btn" type="button" onclick="logoutTrainer()">Logout</button>
 </div>
 
@@ -2249,7 +2248,7 @@ async function initializeTrainerAdminCommandBaseline(){
   }
 }
 
-window.addEventListener("DOMContentLoaded", checkTrainerSession);
+globalThis.addEventListener("DOMContentLoaded", checkTrainerSession);
 </script>
 
 </body>
