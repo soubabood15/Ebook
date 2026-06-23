@@ -850,7 +850,9 @@ button:active{
   <div class="login-card">
     <h1>Trainer Login</h1>
     <p>ادخل اليوزر وكلمة السر الخاصة بالترينر أو الأدمن</p>
+    <label for="loginUsername">Username</label>
     <input id="loginUsername" placeholder="Username" autocomplete="username" />
+    <label for="loginPassword">Password</label>
     <input id="loginPassword" placeholder="Password" type="password" autocomplete="current-password" />
     <button class="primary" type="button" onclick="loginTrainer()">Login</button>
     <div class="login-error" id="loginError">Wrong username or password</div>
@@ -876,6 +878,7 @@ button:active{
         <option>General</option>
       </select>
 
+      <label for="groupName">Group Name</label>
       <input id="groupName" placeholder="Group name مثال: After Delivery" />
 
       <div class="form-row">
@@ -889,6 +892,7 @@ button:active{
       <div id="caseEditBadge" class="editing-badge">Editing case...</div>
       <div id="draftStatus" class="draft-status">Draft saved locally</div>
 
+      <label for="title">Case Title</label>
       <input id="title" placeholder="Case Title" />
 
       <div class="steps-box">
@@ -900,8 +904,10 @@ button:active{
         <button type="button" class="add-step-btn" onclick="addStep()">➕ Add Step</button>
       </div>
 
+      <label for="desc">Suggested Reply / Note</label>
       <textarea id="desc" placeholder="Extra note / Suggested reply (optional)"></textarea>
 
+      <label for="caseSection">Section</label>
       <select id="caseSection" onchange="refreshGroupOptions()">
         <option>Merchant Issue</option>
         <option>Courier Issue</option>
@@ -909,10 +915,12 @@ button:active{
         <option>General</option>
       </select>
 
+      <label for="caseGroup">Group</label>
       <select id="caseGroup">
         <option value="">Select group first</option>
       </select>
 
+      <label for="severity">Severity</label>
       <select id="severity">
         <option>Low</option>
         <option>Medium</option>
@@ -920,16 +928,19 @@ button:active{
         <option>Critical</option>
       </select>
 
+      <label for="escalation">Escalation Required</label>
       <select id="escalation">
         <option>No</option>
         <option>Yes</option>
       </select>
 
+      <label for="refund">Refund Eligible</label>
       <select id="refund">
         <option>No</option>
         <option>Yes</option>
       </select>
 
+      <label for="img">Image URL</label>
       <input id="img" placeholder="Image URL (optional)" />
 
       <div class="form-row">
